@@ -1,0 +1,31 @@
+services:
+  app:
+    image: nextjs-better-auth:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - local-dev-db
+
+  local-dev-db:
+    image: postgres:15.13
+    container_name: local-dev-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - local_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  local_db_data:
