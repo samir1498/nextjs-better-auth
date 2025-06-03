@@ -1,0 +1,68 @@
+name: Lint, Build, Dockerize, and Publish
+
+on:
+  push:
+    branches:
+      - main
+      - ci/**
+  pull_request:
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: dummysecret123
+      MICROSOFT_CLIENT_ID: dummyclientid
+      MICROSOFT_CLIENT_SECRET: dummyclientsecret
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+  dockerize:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: dummysecret123
+      MICROSOFT_CLIENT_ID: dummyclientid
+      MICROSOFT_CLIENT_SECRET: dummyclientsecret
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Get timestamp
+        id: timestamp
+        run: echo "timestamp=$(date -u +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/nextjs-better-auth:latest \
+                       -t ghcr.io/${{ github.repository_owner }}/nextjs-better-auth:${{ steps.timestamp.outputs.timestamp }} .
+          docker push ghcr.io/${{ github.repository_owner }}/nextjs-better-auth:latest
+          docker push ghcr.io/${{ github.repository_owner }}/nextjs-better-auth:${{ steps.timestamp.outputs.timestamp }}
