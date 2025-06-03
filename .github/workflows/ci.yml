@@ -9,8 +9,12 @@ on:
   pull_request:
 
 jobs:
-  build:
+  lint-build:
     runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: dummysecret123
+      MICROSOFT_CLIENT_ID: dummyclientid
+      MICROSOFT_CLIENT_SECRET: dummyclientsecret
 
     steps:
       - name: Checkout code
@@ -31,4 +35,18 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # Optional for Docker (we’ll add this later after verifying build)
+  dockerize:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: dummysecret123
+      MICROSOFT_CLIENT_ID: dummyclientid
+      MICROSOFT_CLIENT_SECRET: dummyclientsecret
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t nextjs-better-auth:latest .
