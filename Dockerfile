@@ -25,6 +25,9 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV BETTER_AUTH_SECRET=dummysecret123 \
+    MICROSOFT_CLIENT_ID=dummyclientid \
+    MICROSOFT_CLIENT_SECRET=dummyclientsecret
 RUN pnpm build
 
 ### Production image runner ###
