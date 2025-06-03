@@ -1,34 +1,40 @@
-name: CI / Lint and Build
+name: Lint, Build, and Dockerize
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - ci/**
+
   pull_request:
 
 jobs:
-  lint-build:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js 20 with pnpm cache
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
-      - name: Enable Corepack and install pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8 # or 10 — whatever your project supports
+          run_install: false
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint code
+      - name: Lint
         run: pnpm lint
 
-      - name: Build app
+      - name: Build
         run: pnpm build
+
+      # Optional for Docker (we’ll add this later after verifying build)
